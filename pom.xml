@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>wildfly-remote-infinispan</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+
+        <wildfly-eap8.version>27.0.0.Final-SNAPSHOT</wildfly-eap8.version>
+        <!-- WildFly/EAP 8 Maven Plugin coordinates -->
+        <wildfly-maven-plugin.groupId>org.wildfly.plugins</wildfly-maven-plugin.groupId>
+        <wildfly-maven-plugin.artifactId>wildfly-maven-plugin</wildfly-maven-plugin.artifactId>
+        <wildfly-maven-plugin.version>4.0.0.Beta4</wildfly-maven-plugin.version>
+        <!-- Default WildFly/EAP 8 Feature Pack coordinates -->
+        <wildfly-eap8.feature-pack.location>org.wildfly:wildfly-galleon-pack:${wildfly-eap8.version}</wildfly-eap8.feature-pack.location>
+        <!-- Default WildFly/EAP 8 Cloud Feature Pack coordinates -->
+        <wildfly-eap8.cloud-feature-pack.location>org.wildfly.cloud:wildfly-cloud-galleon-pack:2.0.0.Beta2</wildfly-eap8.cloud-feature-pack.location>
+        <!-- Default WildFly/EAP 8 `ee` BOMs version is set here and can be overridden for pulling the right BOM -->
+        <bom.wildfly-eap8-ee.groupId>org.wildfly.bom</bom.wildfly-eap8-ee.groupId>
+        <bom.wildfly-eap8-ee.artifactId>wildfly-ee</bom.wildfly-eap8-ee.artifactId>
+        <bom.wildfly-eap8-ee.version>${wildfly-eap8.version}</bom.wildfly-eap8-ee.version>
+
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Lock all the provided dependencies to match the WildFly/EAP version -->
+            <dependency>
+                <groupId>${bom.wildfly-eap8-ee.groupId}</groupId>
+                <artifactId>${bom.wildfly-eap8-ee.artifactId}</artifactId>
+                <version>${bom.wildfly-eap8-ee.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <warName>ROOT</warName>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>${wildfly-maven-plugin.groupId}</groupId>
+                <artifactId>${wildfly-maven-plugin.artifactId}</artifactId>
+                <version>${wildfly-maven-plugin.version}</version>
+                <configuration>
+                    <filename>ROOT.war</filename>
+                    <layers>
+                        <layer>jaxrs-server</layer>
+                        <layer>web-clustering</layer>
+                        <layer>ejb</layer>
+                        <layer>ejb-dist-cache</layer>
+                    </layers>
+                    <excluded-layers>
+                        <layer>ejb-local-cache</layer>
+                    </excluded-layers>
+                    <feature-packs>
+                        <feature-pack>
+                            <location>${wildfly-eap8.feature-pack.location}</location>
+                        </feature-pack>
+                        <feature-pack>
+                            <location>${wildfly-eap8.cloud-feature-pack.location}</location>
+                        </feature-pack>
+                    </feature-packs>
+                    <galleon-options>
+                        <jboss-fork-embedded>true</jboss-fork-embedded>
+                    </galleon-options>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
